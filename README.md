@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="logo.png" alt="Samax Contacts Vault Logo" width="150">
-</p>
+![Uploading Gemini_Generated_Image_gnpcpvgnpcpvgnpc.png…]()
 
 # Samax Contacts Vault Ultimate
 
