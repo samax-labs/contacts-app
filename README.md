@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="logo.png" alt="Samax Contacts Vault Logo" width="150">
+</p>
+
 # Samax Contacts Vault Ultimate
 
 Samax Contacts Vault Ultimate is a fast, responsive, and completely offline contact management application. Built with vanilla web technologies, it provides a premium, minimalist interface for managing personal and professional connections without relying on external databases or backend services.
