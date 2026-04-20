@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Contact Vault Ultimate | Smart Contact Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Inter', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #eef2f7 0%, #e0e8f0 100%);
+            min-height: 100vh;
+            padding-bottom: 90px;
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 64px;
+            height: 64px;
+            background: #2c5f8a;
+            border-radius: 32px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 1000;
+            border: none;
+            color: white;
+        }
+        .fab:hover {
+            transform: scale(1.05);
+            background: #1f4a6e;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 2rem;
+            max-width: 750px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 1.8rem;
+            box-shadow: 0 25px 40px rgba(0,0,0,0.3);
+        }
+
+        .app-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+
+        /* header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+            background: white;
+            padding: 1rem 1.8rem;
+            border-radius: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1f2b3c;
+        }
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .icon-btn {
+            background: #f0f4f9;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: 0.2s;
+        }
+        .icon-btn:hover { background: #e2e8f0; transform: translateY(-1px); }
+        .search-bar {
+            background: white;
+            border-radius: 2rem;
+            padding: 8px 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            margin-right: 15px;
+            border: 1px solid #e2e8f0;
+        }
+        .search-bar input {
+            border: none;
+            outline: none;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+        .filter-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+            align-items: center;
+        }
+        .group-chip {
+            background: #eef2fa;
+            padding: 5px 14px;
+            border-radius: 30px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .group-chip.active {
+            background: #2c5f8a;
+            color: white;
+        }
+        .sort-select {
+            margin-left: auto;
+            padding: 5px 12px;
+            border-radius: 30px;
+            border: 1px solid #cbd5e1;
+            background: white;
+            font-size: 0.75rem;
+        }
+
+        .contacts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 1.2rem;
+            margin-top: 1rem;
+        }
+        .contact-card {
+            background: white;
+            border-radius: 1.5rem;
+            padding: 1rem;
+            transition: 0.2s;
+            box-shadow: 0 5px 12px rgba(0,0,0,0.05);
+            border-left: 5px solid transparent;
+            position: relative;
+        }
+        .contact-card.favorite {
+            border-left-color: #f59e0b;
+            background: #fffef7;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .contact-name {
+            font-weight: 700;
+            font-size: 1.15rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .fav-star {
+            cursor: pointer;
+            color: #ccc;
+            transition: 0.1s;
+            font-size: 1.2rem;
+        }
+        .fav-star.active {
+            color: #f59e0b;
+        }
+        .group-tags {
+            display: flex;
+            gap: 6px;
+            margin: 6px 0;
+            flex-wrap: wrap;
+        }
+        .group-tag {
+            background: #e9ecef;
+            font-size: 0.7rem;
+            padding: 2px 10px;
+            border-radius: 20px;
+        }
+        .detail-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            margin: 6px 0;
+            color: #2c5368;
+            word-break: break-word;
+        }
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            justify-content: flex-end;
+        }
+        .small-btn {
+            background: none;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.7rem;
+        }
+        .small-btn:hover { background: #f0f2f5; }
+        .icon-svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 1.8;
+            fill: none;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-group label {
+            font-weight: 600;
+            font-size: 0.75rem;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 1rem;
+            border: 1px solid #ccc;
+        }
+        .custom-field-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        button.primary {
+            background: #2c5f8a;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 2rem;
+            border: none;
+            cursor: pointer;
+        }
+        button.secondary {
+            background: #6c757d;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 2rem;
+            border: none;
+            cursor: pointer;
+        }
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            right: 28px;
+            background: #1f2937;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+            z-index: 1200;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        .toast.show { opacity: 1; }
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0.5rem 0 1rem 0;
+            font-size: 0.8rem;
+            color: #4b5563;
+        }
+        .batch-actions {
+            display: flex;
+            gap: 8px;
+        }
+        .checkbox-select {
+            margin-right: 8px;
+            cursor: pointer;
+        }
+        @media (max-width: 640px) {
+            .header { flex-direction: column; gap: 10px; }
+            .contacts-grid { grid-template-columns: 1fr; }
+            .filter-group { flex-direction: column; align-items: stretch; }
+            .sort-select { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h1>
+            <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" width="28" height="28"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Contact Vault Ultimate
+        </h1>
+        <div class="toolbar">
+            <div class="search-bar">
+                <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="globalSearch" placeholder="Search name, phone, email, notes...">
+            </div>
+            <button id="importBtn" class="icon-btn"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 15v4a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Import CSV</button>
+            <button id="exportAllBtn" class="icon-btn"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Export CSV</button>
+            <button id="mergeBtn" class="icon-btn"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 4v12M16 4v12M3 8h12M9 16h12"/></svg> Merge</button>
+            <button id="clearAllBtn" class="icon-btn" style="color:#b91c1c;"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Clear All</button>
+        </div>
+    </div>
+
+    <!-- Group filters with sorting -->
+    <div class="filter-group" id="groupFilterContainer">
+        <span class="group-chip active" data-group="all">All</span>
+        <select id="sortSelect" class="sort-select">
+            <option value="name">Sort by Name</option>
+            <option value="date">Sort by Date (newest)</option>
+            <option value="favorite">Favorites First</option>
+        </select>
+    </div>
+
+    <!-- Stats and batch actions -->
+    <div class="stats-bar" id="statsBar">
+        <span id="contactCount">0 contacts</span>
+        <div class="batch-actions">
+            <button id="batchDeleteBtn" class="small-btn" style="display:none; background:#fee2e2;">Delete Selected</button>
+        </div>
+    </div>
+
+    <div id="contactsContainer" class="contacts-grid"></div>
+</div>
+
+<!-- FAB -->
+<button class="fab" id="fabBtn">
+    <svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" width="28" height="28"><path d="M12 5v14M5 12h14"/></svg>
+</button>
+
+<!-- Toast Notification -->
+<div id="toast" class="toast"></div>
+
+<!-- Modal Form -->
+<div id="contactModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3 id="modalTitle">Add Contact</h3>
+        <div class="form-group"><label>Full Name *</label><input id="formName" placeholder="Name"></div>
+        <div class="form-group"><label>Primary Phone</label><input id="formPhone1" placeholder="+1 234 567 8900"></div>
+        <div class="form-group"><label>Secondary Phone</label><input id="formPhone2" placeholder="Optional second number"></div>
+        <div class="form-group"><label>Email</label><input id="formEmail" placeholder="email@example.com"></div>
+        <div class="form-group"><label>Location</label><input id="formLocation" placeholder="City, Country"></div>
+        <div class="form-group"><label>Gender</label><select id="formGender"><option value="">Prefer not to say</option><option>Female</option><option>Male</option><option>Non-binary</option></select></div>
+        <div class="form-group"><label>Company</label><input id="formCompany" placeholder="Organization"></div>
+        <div class="form-group"><label>Group Label</label><input id="formGroup" placeholder="e.g., Family, Work, Friends"></div>
+        <div class="form-group"><label>Birthday</label><input id="formBirthday" type="date" placeholder="YYYY-MM-DD"></div>
+        <div class="form-group"><label>Notes</label><textarea id="formNotes" rows="2" placeholder="Additional info..."></textarea></div>
+        <div class="form-group"><label>Custom Fields</label><div id="customFieldsContainer"></div><button type="button" id="addCustomFieldBtn" class="small-btn">+ Add Custom Field</button></div>
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 1rem;">
+            <button id="modalCloseBtn" class="secondary">Cancel</button>
+            <button id="modalSaveBtn" class="primary">Save Contact</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Enhanced Contact Manager with CSV Export/Import
+    let contacts = [];
+    let editId = null;
+    let customFieldsTemp = [];
+    let selectedContacts = new Set();
+
+    function showToast(msg, duration=2000) {
+        const toast = document.getElementById('toast');
+        toast.textContent = msg;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), duration);
+    }
+
+    // CSV escaping helper
+    function escapeCSV(str) {
+        if (str === undefined || str === null) return '';
+        const stringVal = String(str);
+        if (stringVal.includes(',') || stringVal.includes('"') || stringVal.includes('\n') || stringVal.includes('\r')) {
+            return '"' + stringVal.replace(/"/g, '""') + '"';
+        }
+        return stringVal;
+    }
+
+    function loadData() {
+        const stored = localStorage.getItem('contactAppUltimate');
+        if(stored) {
+            contacts = JSON.parse(stored);
+        } else {
+            contacts = [
+                { id: '1', name: 'Alex Morgan', phonePrimary: '+1 555 123 4567', phoneSecondary: '', email: 'alex@design.com', location: 'NYC', gender: 'Male', company: 'Studio', group: 'Work', notes: 'Lead designer', birthday: '1990-05-15', customFields: [{key:"Slack", value:"@alex"}], favorite: true, createdAt: Date.now() - 86400000 },
+                { id: '2', name: 'Taylor Chen', phonePrimary: '+44 20 7946 0123', phoneSecondary: '+44 7788 123456', email: 'taylor@tech.com', location: 'London', gender: 'Non-binary', company: 'TechWave', group: 'Friends', notes: 'Loves coffee chats', birthday: '', customFields: [], favorite: false, createdAt: Date.now() },
+                { id: '3', name: 'Jordan Lee', phonePrimary: '+81 90 1234 5678', phoneSecondary: '', email: 'jordan@innovate.jp', location: 'Tokyo', gender: 'Female', company: 'Innovate', group: 'Family', notes: 'Birthday in May', birthday: '1988-03-22', customFields: [{key:"Hobby", value:"Photography"}], favorite: false, createdAt: Date.now() - 172800000 }
+            ];
+        }
+        renderGroupsFilter();
+        renderContacts();
+        updateStats();
+    }
+    function saveToLocal() { 
+        localStorage.setItem('contactAppUltimate', JSON.stringify(contacts)); 
+        renderGroupsFilter(); 
+        renderContacts(); 
+        updateStats();
+        showToast('Changes saved');
+    }
+
+    function updateStats() {
+        const count = contacts.length;
+        document.getElementById('contactCount').innerText = `${count} contact${count !== 1 ? 's' : ''}`;
+        const batchBtn = document.getElementById('batchDeleteBtn');
+        if(selectedContacts.size > 0) {
+            batchBtn.style.display = 'inline-flex';
+            batchBtn.innerText = `Delete ${selectedContacts.size} selected`;
+        } else {
+            batchBtn.style.display = 'none';
+        }
+    }
+
+    function renderGroupsFilter() {
+        const groupsSet = new Set(contacts.map(c => c.group).filter(g => g));
+        const container = document.getElementById('groupFilterContainer');
+        const sortSelect = document.getElementById('sortSelect');
+        container.innerHTML = `<span class="group-chip active" data-group="all">All</span>`;
+        groupsSet.forEach(g => { container.innerHTML += `<span class="group-chip" data-group="${g}">${escapeHtml(g)}</span>`; });
+        container.appendChild(sortSelect);
+        document.querySelectorAll('.group-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                document.querySelectorAll('.group-chip').forEach(c => c.classList.remove('active'));
+                chip.classList.add('active');
+                selectedContacts.clear();
+                renderContacts();
+                updateStats();
+            });
+        });
+    }
+
+    function getActiveGroup() { const active = document.querySelector('.group-chip.active'); return active ? active.dataset.group : 'all'; }
+    function getSearchTerm() { return document.getElementById('globalSearch').value.toLowerCase(); }
+    function getSortType() { return document.getElementById('sortSelect').value; }
+
+    function getFilteredContacts() {
+        let filtered = [...contacts];
+        const group = getActiveGroup();
+        if(group !== 'all') filtered = filtered.filter(c => c.group === group);
+        const search = getSearchTerm();
+        if(search) {
+            filtered = filtered.filter(c => c.name.toLowerCase().includes(search) || (c.phonePrimary && c.phonePrimary.includes(search)) || (c.email && c.email.toLowerCase().includes(search)) || (c.notes && c.notes.toLowerCase().includes(search)) || (c.location && c.location.toLowerCase().includes(search)) || (c.company && c.company.toLowerCase().includes(search)));
+        }
+        const sortBy = getSortType();
+        if(sortBy === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name));
+        else if(sortBy === 'favorite') filtered.sort((a,b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0));
+        else if(sortBy === 'date') filtered.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+        return filtered;
+    }
+
+    function renderContacts() {
+        const filtered = getFilteredContacts();
+        const container = document.getElementById('contactsContainer');
+        if(filtered.length === 0) { container.innerHTML = `<div style="text-align:center; padding:3rem;">✨ No contacts found</div>`; return; }
+        container.innerHTML = '';
+        filtered.forEach(contact => {
+            const isSelected = selectedContacts.has(contact.id);
+            const card = document.createElement('div');
+            card.className = `contact-card ${contact.favorite ? 'favorite' : ''}`;
+            card.style.background = isSelected ? '#fef9e3' : 'white';
+            card.innerHTML = `
+                <div class="card-header">
+                    <div class="contact-name">
+                        <input type="checkbox" class="checkbox-select" data-id="${contact.id}" ${isSelected ? 'checked' : ''}>
+                        <span>${escapeHtml(contact.name)}</span>
+                        <span class="fav-star" data-id="${contact.id}">${contact.favorite ? '★' : '☆'}</span>
+                    </div>
+                </div>
+                <div class="group-tags">${contact.group ? `<span class="group-tag">${escapeHtml(contact.group)}</span>` : ''}${contact.birthday ? `<span class="group-tag">🎂 ${escapeHtml(contact.birthday)}</span>` : ''}</div>
+                <div class="detail-row"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> ${contact.phonePrimary || '—'} ${contact.phoneSecondary ? `<span style="font-size:0.7rem;">(Sec: ${escapeHtml(contact.phoneSecondary)})</span>` : ''}</div>
+                ${contact.email ? `<div class="detail-row"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg> ${escapeHtml(contact.email)}</div>` : ''}
+                ${contact.location ? `<div class="detail-row"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ${escapeHtml(contact.location)}</div>` : ''}
+                ${contact.company ? `<div class="detail-row"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> ${escapeHtml(contact.company)}</div>` : ''}
+                ${contact.notes ? `<div class="detail-row"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> ${escapeHtml(contact.notes.substring(0, 60))}</div>` : ''}
+                ${contact.customFields && contact.customFields.length ? `<div class="detail-row"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> ${contact.customFields.map(f => `${f.key}:${f.value}`).join(', ')}</div>` : ''}
+                <div class="card-actions">
+                    <button class="small-btn share-btn" data-id="${contact.id}"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg> Share</button>
+                    <button class="small-btn edit-btn" data-id="${contact.id}"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 3l4 4-7 7H10v-4l7-7z"/><path d="M4 20h16"/></svg> Edit</button>
+                    <button class="small-btn delete-btn" data-id="${contact.id}"><svg class="icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/></svg> Del</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+        document.querySelectorAll('.fav-star').forEach(el => el.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(el.dataset.id); }));
+        document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', (e) => { openEditModal(btn.dataset.id); }));
+        document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', (e) => { if(confirm('Delete this contact?')) deleteContact(btn.dataset.id); }));
+        document.querySelectorAll('.share-btn').forEach(btn => btn.addEventListener('click', (e) => { shareContact(btn.dataset.id); }));
+        document.querySelectorAll('.checkbox-select').forEach(cb => cb.addEventListener('change', (e) => { 
+            const id = cb.dataset.id;
+            if(cb.checked) selectedContacts.add(id);
+            else selectedContacts.delete(id);
+            updateStats();
+            renderContacts();
+        }));
+    }
+
+    function toggleFavorite(id) { let c = contacts.find(c => c.id === id); if(c) { c.favorite = !c.favorite; saveToLocal(); } }
+    function deleteContact(id) { contacts = contacts.filter(c => c.id !== id); selectedContacts.delete(id); saveToLocal(); if(editId === id) closeModal(); }
+    
+    function batchDelete() {
+        if(selectedContacts.size === 0) return;
+        if(confirm(`Delete ${selectedContacts.size} contact(s) permanently?`)) {
+            contacts = contacts.filter(c => !selectedContacts.has(c.id));
+            selectedContacts.clear();
+            saveToLocal();
+            showToast(`Deleted, ${contacts.length} contacts remaining`);
+        }
+    }
+
+    function shareContact(id) {
+        const c = contacts.find(c => c.id === id);
+        if(!c) return;
+        const text = `Contact: ${c.name}\nPhone: ${c.phonePrimary || 'N/A'}\nEmail: ${c.email || 'N/A'}\nLocation: ${c.location || 'N/A'}\nCompany: ${c.company || 'N/A'}`;
+        if(navigator.share) navigator.share({title: c.name, text: text});
+        else { navigator.clipboard.writeText(text); showToast('Contact copied to clipboard!'); }
+    }
+
+    function mergeDuplicates() {
+        let duplicatesMap = new Map();
+        contacts.forEach(c => {
+            let key = c.name.toLowerCase().trim();
+            if(!duplicatesMap.has(key)) duplicatesMap.set(key, []);
+            duplicatesMap.get(key).push(c);
+        });
+        let merged = [];
+        for(let [name, group] of duplicatesMap.entries()) {
+            if(group.length > 1) {
+                let base = group[0];
+                for(let i=1; i<group.length; i++) {
+                    base.phoneSecondary = base.phoneSecondary || group[i].phonePrimary || group[i].phoneSecondary;
+                    base.email = base.email || group[i].email;
+                    base.location = base.location || group[i].location;
+                    base.notes = base.notes ? base.notes + "; " + group[i].notes : group[i].notes;
+                    base.customFields = [...(base.customFields || []), ...(group[i].customFields || [])];
+                    base.group = base.group || group[i].group;
+                }
+                merged.push(base);
+            } else merged.push(group[0]);
+        }
+        contacts = merged;
+        saveToLocal();
+        showToast(`Merged into ${contacts.length} unique contacts`);
+    }
+
+    function clearAllContacts() {
+        if(confirm('⚠️ DELETE ALL CONTACTS? This cannot be undone.')) {
+            contacts = [];
+            selectedContacts.clear();
+            saveToLocal();
+            showToast('All contacts cleared');
+        }
+    }
+
+    // CSV Export Function
+    function exportToCSV() {
+        if (contacts.length === 0) {
+            alert("No contacts to export.");
+            return;
+        }
+        
+        // Define CSV headers
+        const headers = [
+            'Name', 'Primary Phone', 'Secondary Phone', 'Email', 'Location', 
+            'Gender', 'Company', 'Group', 'Birthday', 'Notes', 'Favorite', 
+            'Custom Fields', 'Created Date'
+        ];
+        
+        // Build CSV rows
+        const rows = contacts.map(contact => {
+            const customFieldsStr = contact.customFields && contact.customFields.length 
+                ? contact.customFields.map(f => `${f.key}:${f.value}`).join('; ')
+                : '';
+            
+            return [
+                contact.name || '',
+                contact.phonePrimary || '',
+                contact.phoneSecondary || '',
+                contact.email || '',
+                contact.location || '',
+                contact.gender || '',
+                contact.company || '',
+                contact.group || '',
+                contact.birthday || '',
+                contact.notes || '',
+                contact.favorite ? 'Yes' : 'No',
+                customFieldsStr,
+                contact.createdAt ? new Date(contact.createdAt).toLocaleDateString() : ''
+            ].map(escapeCSV).join(',');
+        });
+        
+        const csvContent = [headers.map(escapeCSV).join(','), ...rows].join('\n');
+        
+        // Add BOM for UTF-8 support in Excel
+        const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `contacts_export_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast(`Exported ${contacts.length} contacts to CSV`);
+    }
+
+    // CSV Import Function
+    function importFromCSV() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.csv';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const text = ev.target.result;
+                    const lines = text.split(/\r?\n/);
+                    if (lines.length < 2) throw new Error("CSV file is empty");
+                    
+                    const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, '').trim());
+                    let importedCount = 0;
+                    
+                    for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue;
+                        
+                        // Simple CSV parsing (handles quoted fields)
+                        let row = [];
+                        let inQuote = false;
+                        let current = '';
+                        for (let j = 0; j < lines[i].length; j++) {
+                            const ch = lines[i][j];
+                            if (ch === '"') {
+                                if (inQuote && lines[i][j+1] === '"') {
+                                    current += '"';
+                                    j++;
+                                } else {
+                                    inQuote = !inQuote;
+                                }
+                            } else if (ch === ',' && !inQuote) {
+                                row.push(current);
+                                current = '';
+                            } else {
+                                current += ch;
+                            }
+                        }
+                        row.push(current);
+                        
+                        if (row.length < 2) continue;
+                        
+                        const newContact = {
+                            id: generateId(),
+                            name: row[0]?.replace(/^"|"$/g, '') || '',
+                            phonePrimary: row[1]?.replace(/^"|"$/g, '') || '',
+                            phoneSecondary: row[2]?.replace(/^"|"$/g, '') || '',
+                            email: row[3]?.replace(/^"|"$/g, '') || '',
+                            location: row[4]?.replace(/^"|"$/g, '') || '',
+                            gender: row[5]?.replace(/^"|"$/g, '') || '',
+                            company: row[6]?.replace(/^"|"$/g, '') || '',
+                            group: row[7]?.replace(/^"|"$/g, '') || '',
+                            birthday: row[8]?.replace(/^"|"$/g, '') || '',
+                            notes: row[9]?.replace(/^"|"$/g, '') || '',
+                            favorite: row[10]?.replace(/^"|"$/g, '') === 'Yes',
+                            customFields: [],
+                            createdAt: Date.now()
+                        };
+                        
+                        // Parse custom fields if present
+                        const customFieldsStr = row[11]?.replace(/^"|"$/g, '') || '';
+                        if (customFieldsStr) {
+                            const pairs = customFieldsStr.split('; ');
+                            pairs.forEach(pair => {
+                                const [key, value] = pair.split(':');
+                                if (key && value) newContact.customFields.push({ key, value });
+                            });
+                        }
+                        
+                        if (newContact.name) {
+                            contacts.push(newContact);
+                            importedCount++;
+                        }
+                    }
+                    
+                    if (importedCount > 0) {
+                        saveToLocal();
+                        showToast(`Imported ${importedCount} contacts from CSV`);
+                    } else {
+                        alert("No valid contacts found in CSV file");
+                    }
+                } catch(err) {
+                    console.error(err);
+                    alert("Error parsing CSV file. Make sure it's a valid CSV format.");
+                }
+            };
+            reader.readAsText(file, 'UTF-8');
+        };
+        input.click();
+    }
+
+    function openModal(contact = null) {
+        editId = contact ? contact.id : null;
+        document.getElementById('modalTitle').innerText = contact ? 'Edit Contact' : 'Add Contact';
+        document.getElementById('formName').value = contact ? contact.name : '';
+        document.getElementById('formPhone1').value = contact ? (contact.phonePrimary || '') : '';
+        document.getElementById('formPhone2').value = contact ? (contact.phoneSecondary || '') : '';
+        document.getElementById('formEmail').value = contact ? (contact.email || '') : '';
+        document.getElementById('formLocation').value = contact ? (contact.location || '') : '';
+        document.getElementById('formGender').value = contact ? (contact.gender || '') : '';
+        document.getElementById('formCompany').value = contact ? (contact.company || '') : '';
+        document.getElementById('formGroup').value = contact ? (contact.group || '') : '';
+        document.getElementById('formNotes').value = contact ? (contact.notes || '') : '';
+        document.getElementById('formBirthday').value = contact ? (contact.birthday || '') : '';
+        customFieldsTemp = contact?.customFields ? [...contact.customFields] : [];
+        renderCustomFieldsUI();
+        document.getElementById('contactModal').classList.add('active');
+    }
+
+    function renderCustomFieldsUI() {
+        const container = document.getElementById('customFieldsContainer');
+        container.innerHTML = '';
+        customFieldsTemp.forEach((f, idx) => {
+            const div = document.createElement('div'); div.className = 'custom-field-row';
+            div.innerHTML = `<input placeholder="Key" value="${escapeHtml(f.key)}" data-idx="${idx}" class="cf-key"><input placeholder="Value" value="${escapeHtml(f.value)}" data-idx="${idx}" class="cf-value"><button class="small-btn remove-cf" data-idx="${idx}">✖</button>`;
+            container.appendChild(div);
+        });
+        document.querySelectorAll('.remove-cf').forEach(btn => btn.addEventListener('click', (e) => { let idx = parseInt(btn.dataset.idx); customFieldsTemp.splice(idx,1); renderCustomFieldsUI(); }));
+        document.querySelectorAll('.cf-key').forEach(inp => inp.addEventListener('change', (e) => { let idx = parseInt(inp.dataset.idx); customFieldsTemp[idx].key = inp.value; }));
+        document.querySelectorAll('.cf-value').forEach(inp => inp.addEventListener('change', (e) => { let idx = parseInt(inp.dataset.idx); customFieldsTemp[idx].value = inp.value; }));
+    }
+
+    function closeModal() { document.getElementById('contactModal').classList.remove('active'); editId = null; }
+    
+    function saveFromModal() {
+        const name = document.getElementById('formName').value.trim();
+        if(!name) { alert("Name required"); return; }
+        const contactData = {
+            id: editId || generateId(),
+            name: name,
+            phonePrimary: document.getElementById('formPhone1').value,
+            phoneSecondary: document.getElementById('formPhone2').value,
+            email: document.getElementById('formEmail').value,
+            location: document.getElementById('formLocation').value,
+            gender: document.getElementById('formGender').value,
+            company: document.getElementById('formCompany').value,
+            group: document.getElementById('formGroup').value,
+            notes: document.getElementById('formNotes').value,
+            birthday: document.getElementById('formBirthday').value,
+            customFields: customFieldsTemp.filter(f => f.key.trim()),
+            favorite: editId ? (contacts.find(c=>c.id===editId)?.favorite || false) : false,
+            createdAt: editId ? (contacts.find(c=>c.id===editId)?.createdAt || Date.now()) : Date.now()
+        };
+        if(editId) { const index = contacts.findIndex(c => c.id === editId); if(index !== -1) contacts[index] = contactData; }
+        else contacts.push(contactData);
+        saveToLocal();
+        closeModal();
+    }
+    
+    function openEditModal(id) { const contact = contacts.find(c => c.id === id); if(contact) openModal(contact); }
+    function generateId() { return Date.now().toString(36) + Math.random().toString(36).substring(2,6); }
+    function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    // Event Listeners
+    document.getElementById('fabBtn').addEventListener('click', () => openModal(null));
+    document.getElementById('modalCloseBtn').addEventListener('click', closeModal);
+    document.getElementById('modalSaveBtn').addEventListener('click', saveFromModal);
+    document.getElementById('importBtn').addEventListener('click', importFromCSV);
+    document.getElementById('exportAllBtn').addEventListener('click', exportToCSV);
+    document.getElementById('mergeBtn').addEventListener('click', () => { mergeDuplicates(); });
+    document.getElementById('clearAllBtn').addEventListener('click', clearAllContacts);
+    document.getElementById('globalSearch').addEventListener('input', () => { selectedContacts.clear(); renderContacts(); updateStats(); });
+    document.getElementById('addCustomFieldBtn').addEventListener('click', () => { customFieldsTemp.push({key:"", value:""}); renderCustomFieldsUI(); });
+    document.getElementById('sortSelect').addEventListener('change', () => renderContacts());
+    document.getElementById('batchDeleteBtn').addEventListener('click', batchDelete);
+    loadData();
+</script>
+</body>
+</html>
